@@ -1,0 +1,11 @@
+[programs.localnet]
+ai_dex = "ai83GDhGGXZqJKBYHX6jAQdMMGXqsbZvW3kZR5umh4f"
+
+[registry]
+url = "http://localhost:8899"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+

@@ -1,0 +1,40 @@
+[package]
+name = "ai_dex"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "ai_dex"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+solana-program = "1.18.26"
+anchor-lang = "0.30.1"
+anchor-spl = {version = "0.30.1", features = ["metadata", "memo"]}
+spl-token = {version = "4", features = ["no-entrypoint"]}
+spl-transfer-hook-interface = "0.6.5"
+thiserror = "1.0"
+uint = {version = "0.9.1", default-features = false}
+borsh09 = {package = "borsh", version = "0.9.1"}
+solana-security-txt = { version = "=1.1.1" }
+serde_spanned = "0.6.6"
+toml_edit = "0.22.19"
+pyth-solana-receiver-sdk ="0.3.1"
+pythnet-sdk = "=2.1.0"
+
+[dev-dependencies]
+proptest = "1.0"
+serde = "1.0.117"
+serde_json = "1.0.59"
+
+[dev-dependencies.serde_with]
+version = "1.12.0"
+features = ["json"]

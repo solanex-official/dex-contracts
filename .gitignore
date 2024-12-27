@@ -1,0 +1,11 @@
+.anchor
+.DS_Store
+.vscode/
+target
+test-ledger
+**/*.rs.bk
+node_modules
+authAdmin.json
+nft-update.json
+id.json
+pyth_solana_receiver.so
