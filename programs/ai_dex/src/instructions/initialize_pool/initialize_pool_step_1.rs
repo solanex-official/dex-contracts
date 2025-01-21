@@ -26,6 +26,7 @@ pub struct PoolInitializedBasicEvent {
     pub is_temporary_pool: bool,
     pub is_oracle_pool: bool,
     pub oracle_account: Pubkey,
+    pub price_update: Pubkey,
     pub price_feed_id: String,
 }
 
@@ -183,6 +184,7 @@ pub fn initialize_pool_step_1_handler(
         is_temporary_pool,
         is_oracle_pool,
         oracle_account: ctx.accounts.oracle_account.as_ref().map(|a| a.key()).unwrap_or_default(),
+        price_update: ctx.accounts.price_update.as_ref().map(|a| a.key()).unwrap_or_default(),
         price_feed_id: price_feed_id.unwrap_or_default(),
     });
 

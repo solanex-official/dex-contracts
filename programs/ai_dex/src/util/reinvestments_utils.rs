@@ -70,36 +70,36 @@ pub fn calculate_liquidity_from_amounts(
         return Err(ErrorCode::InvalidTickArraySequenceError.into());
     }
 
+    // Early return if both amounts are zero
+    if amount_a == 0 && amount_b == 0 {
+        return Ok(0);
+    }
+
     let sqrt_price_lower = sqrt_price_from_tick_index(tick_lower_index);
     let sqrt_price_upper = sqrt_price_from_tick_index(tick_upper_index);
 
     let liquidity = if current_tick_index >= tick_upper_index {
         // Only token B calculation
-        est_liquidity_for_token_b(
-            sqrt_price_upper,
-            sqrt_price_lower,
-            amount_b
-        )?
+        if amount_b == 0 {
+            // If no token B amount provided, liquidity is zero
+            return Ok(0);
+        }
+        est_liquidity_for_token_b(sqrt_price_upper, sqrt_price_lower, amount_b)?
     } else if current_tick_index < tick_lower_index {
         // Only token A calculation
-        est_liquidity_for_token_a(
-            sqrt_price_lower,
-            sqrt_price_upper,
-            amount_a
-        )?
+        if amount_a == 0 {
+            // If no token A amount provided, liquidity is zero
+            return Ok(0);
+        }
+        est_liquidity_for_token_a(sqrt_price_lower, sqrt_price_upper, amount_a)?
     } else {
         // Both token calculations
-        let liquidity_a = est_liquidity_for_token_a(
-            sqrt_price,
-            sqrt_price_upper,
-            amount_a
-        )?;
-        let liquidity_b = est_liquidity_for_token_b(
-            sqrt_price,
-            sqrt_price_lower,
-            amount_b
-        )?;
-             
+        if amount_a == 0 || amount_b == 0 {
+            // If either amount is zero in the overlapping range, liquidity is zero
+            return Ok(0);
+        }
+        let liquidity_a = est_liquidity_for_token_a(sqrt_price, sqrt_price_upper, amount_a)?;
+        let liquidity_b = est_liquidity_for_token_b(sqrt_price, sqrt_price_lower, amount_b)?;
         std::cmp::min(liquidity_a, liquidity_b)
     };
 

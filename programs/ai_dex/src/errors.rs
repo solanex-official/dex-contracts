@@ -171,6 +171,12 @@ pub enum ErrorCode {
     ReinvestmentNotEnabled,
     #[msg("Invalid provided config account")]
     InvalidAiDexConfig,
+    #[msg("Zero referral amount withdrawal")]
+    ZeroReferralAmountWithdrawal,
+    #[msg("Fee rate unchanged")]
+    FeeRateUnchanged,
+    #[msg("Empty admin input")]
+    EmptyAdminInput,
 }
 
 impl From<TryFromIntError> for ErrorCode {

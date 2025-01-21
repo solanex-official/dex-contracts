@@ -87,34 +87,24 @@ pub fn collect_protocol_fees_handler<'a, 'b, 'c, 'info>(
     ctx: Context<'a, 'b, 'c, 'info, CollectProtocolFees<'info>>,
     remaining_accounts_info: Option<RemainingAccountsInfo>,
 ) -> Result<()> {
-    let ai_dex_pool = ctx.accounts.ai_dex_pool.load()?;
+    let mut ai_dex_pool = ctx.accounts.ai_dex_pool.load_mut()?;
 
-    // Check if token_mint_a matches ai_dex_pool.token_mint_a
+    // Validate mints, vaults, and destination accounts against expected pool values.
     if ctx.accounts.token_mint_a.key() != ai_dex_pool.token_mint_a {
         return Err(ErrorCode::InvalidRewardMintError.into());
     }
-
-    // Check if token_mint_b matches ai_dex_pool.token_mint_b
     if ctx.accounts.token_mint_b.key() != ai_dex_pool.token_mint_b {
         return Err(ErrorCode::InvalidRewardMintError.into());
     }
-
-    // Check if token_vault_a matches ai_dex_pool.token_vault_a
     if ctx.accounts.token_vault_a.key() != ai_dex_pool.token_vault_a {
         return Err(ErrorCode::InvalidVault.into());
     }
-
-    // Check if token_vault_b matches ai_dex_pool.token_vault_b
     if ctx.accounts.token_vault_b.key() != ai_dex_pool.token_vault_b {
         return Err(ErrorCode::InvalidVault.into());
     }
-
-    // Check if token_destination_a.mint matches ai_dex_pool.token_mint_a
     if ctx.accounts.token_destination_a.mint != ai_dex_pool.token_mint_a {
         return Err(ErrorCode::InvalidTokenOwner.into());
     }
-
-    // Check if token_destination_b.mint matches ai_dex_pool.token_mint_b
     if ctx.accounts.token_destination_b.mint != ai_dex_pool.token_mint_b {
         return Err(ErrorCode::InvalidTokenOwner.into());
     }
@@ -131,44 +121,52 @@ pub fn collect_protocol_fees_handler<'a, 'b, 'c, 'info>(
 
     let protocol_fee_owed_a = ai_dex_pool.protocol_fee_owed_a;
     let protocol_fee_owed_b = ai_dex_pool.protocol_fee_owed_b;
+
+    // Reset fees owed before performing transfers
+    ai_dex_pool.reset_protocol_fees_owed();
     drop(ai_dex_pool);
 
-    // Transfer the owed protocol fees from the vault to the destination account for token A.
-    transfer_from_vault_to_owner(
-        &ctx.accounts.ai_dex_pool,
-        &ctx.accounts.token_mint_a,
-        &ctx.accounts.token_vault_a,
-        &ctx.accounts.token_destination_a,
-        &ctx.accounts.token_program_a,
-        &ctx.accounts.memo_program,
-        &remaining_accounts.transfer_hook_a,
-        protocol_fee_owed_a,
-        transfer_memo::TRANSFER_MEMO_COLLECT_PROTOCOL_FEES.as_bytes(),
-    )?;
-    // Transfer the owed protocol fees from the vault to the destination account for token B.
-    transfer_from_vault_to_owner(
-        &ctx.accounts.ai_dex_pool,
-        &ctx.accounts.token_mint_b,
-        &ctx.accounts.token_vault_b,
-        &ctx.accounts.token_destination_b,
-        &ctx.accounts.token_program_b,
-        &ctx.accounts.memo_program,
-        &remaining_accounts.transfer_hook_b,
-        protocol_fee_owed_b,
-        transfer_memo::TRANSFER_MEMO_COLLECT_PROTOCOL_FEES.as_bytes(),
-    )?;
+    // Transfer the owed protocol fee for Token A if non-zero.
+    if protocol_fee_owed_a > 0 {
+        transfer_from_vault_to_owner(
+            &ctx.accounts.ai_dex_pool,
+            &ctx.accounts.token_mint_a,
+            &ctx.accounts.token_vault_a,
+            &ctx.accounts.token_destination_a,
+            &ctx.accounts.token_program_a,
+            &ctx.accounts.memo_program,
+            &remaining_accounts.transfer_hook_a,
+            protocol_fee_owed_a,
+            transfer_memo::TRANSFER_MEMO_COLLECT_PROTOCOL_FEES.as_bytes(),
+        )?;
+    }
+
+    // Transfer the owed protocol fee for Token B if non-zero.
+    if protocol_fee_owed_b > 0 {
+        transfer_from_vault_to_owner(
+            &ctx.accounts.ai_dex_pool,
+            &ctx.accounts.token_mint_b,
+            &ctx.accounts.token_vault_b,
+            &ctx.accounts.token_destination_b,
+            &ctx.accounts.token_program_b,
+            &ctx.accounts.memo_program,
+            &remaining_accounts.transfer_hook_b,
+            protocol_fee_owed_b,
+            transfer_memo::TRANSFER_MEMO_COLLECT_PROTOCOL_FEES.as_bytes(),
+        )?;
+    }
 
     emit!(CollectProtocolFeesEvent {
         ai_dex_pool: ctx.accounts.ai_dex_pool.key(),
-        protocol_fee_owed_a: protocol_fee_owed_a,
-        protocol_fee_owed_b: protocol_fee_owed_b,
+        protocol_fee_owed_a,
+        protocol_fee_owed_b,
         token_mint_a: ctx.accounts.token_mint_a.key(),
         token_vault_a: ctx.accounts.token_vault_a.key(),
         token_destination_a: ctx.accounts.token_destination_a.key(),
         token_mint_b: ctx.accounts.token_mint_b.key(),
         token_vault_b: ctx.accounts.token_vault_b.key(),
         token_destination_b: ctx.accounts.token_destination_b.key(),
-    });    
+    });
 
-    Ok(ctx.accounts.ai_dex_pool.load_mut()?.reset_protocol_fees_owed())
+    Ok(())
 }

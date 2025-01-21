@@ -809,8 +809,8 @@ pub mod ai_dex {
         amount_specified_is_input: bool,
         a_to_b_one: bool,
         a_to_b_two: bool,
-        sqrt_price_limit_one: u128,
-        sqrt_price_limit_two: u128,
+        sqrt_price_limit_one: [u8; 16],
+        sqrt_price_limit_two: [u8; 16],
         remaining_accounts_info: Option<RemainingAccountsInfo>,
     ) -> Result<()> {
         return instructions::two_hop_swap::two_hop_swap_handler(

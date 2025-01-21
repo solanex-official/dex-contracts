@@ -423,9 +423,13 @@ impl AiDexPool {
     ///
     /// # Errors
     /// This function returns an error if the fee rate exceeds the maximum fee rate.
+    /// This function returns an error if the fee rate is unchanged.
     pub fn update_fee_rate(&mut self, fee_rate: u16) -> Result<()> {
         if fee_rate > MAX_FEE_RATE {
             return Err(ErrorCode::FeeRateExceededError.into());
+        }
+        if fee_rate == self.fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
         }
         self.fee_rate = fee_rate;
 
@@ -439,9 +443,13 @@ impl AiDexPool {
     ///
     /// # Errors
     /// This function returns an error if the protocol fee rate exceeds the maximum protocol fee rate.
+    /// This function returns an error if the protocol fee rate is unchanged.
     pub fn update_protocol_fee_rate(&mut self, protocol_fee_rate: u16) -> Result<()> {
         if protocol_fee_rate > MAX_PROTOCOL_FEE_RATE {
             return Err(ErrorCode::ProtocolFeeRateExceededError.into());
+        }
+        if protocol_fee_rate == self.protocol_fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
         }
         self.protocol_fee_rate = protocol_fee_rate;
 

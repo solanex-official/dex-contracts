@@ -46,9 +46,13 @@ impl FeeTier {
     /// # Errors
     ///
     /// Returns an error if the default fee rate exceeds the maximum fee rate.
+    /// Returns an error if the default fee rate is unchanged.
     pub fn update_default_fee_rate(&mut self, default_fee_rate: u16) -> Result<()> {
         if default_fee_rate > MAX_FEE_RATE {
             return Err(ErrorCode::FeeRateExceededError.into());
+        }
+        if default_fee_rate == self.default_fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
         }
         self.default_fee_rate = default_fee_rate;
 

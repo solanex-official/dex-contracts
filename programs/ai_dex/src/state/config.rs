@@ -54,12 +54,16 @@ impl AiDexConfig {
     /// # Errors
     ///
     /// Returns an error if the default protocol fee rate exceeds the maximum protocol fee rate.
+    /// Returns an error if the default protocol fee rate is unchanged.
     pub fn update_default_protocol_fee_rate(
         &mut self,
         default_protocol_fee_rate: u16,
     ) -> Result<()> {
         if default_protocol_fee_rate > MAX_PROTOCOL_FEE_RATE {
             return Err(ErrorCode::ProtocolFeeRateExceededError.into());
+        }
+        if default_protocol_fee_rate == self.default_protocol_fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
         }
         self.default_protocol_fee_rate = default_protocol_fee_rate;
 
@@ -72,6 +76,9 @@ impl AiDexConfig {
     ) -> Result<()> {
         if default_swap_referral_reward_fee_rate > MAX_REFERRAL_REWARD_FEE_RATE {
             return Err(ErrorCode::ReferralRewardFeeRateExceededError.into());
+        }
+        if default_swap_referral_reward_fee_rate == self.default_swap_referral_reward_fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
         }
         self.default_swap_referral_reward_fee_rate = default_swap_referral_reward_fee_rate;
         Ok(())

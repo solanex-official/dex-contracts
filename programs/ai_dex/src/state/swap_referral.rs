@@ -50,6 +50,9 @@ impl SwapReferral {
         if swap_referral_reward_fee_rate > MAX_REFERRAL_REWARD_FEE_RATE {
             return Err(ErrorCode::ReferralRewardFeeRateExceededError.into());
         }
+        if swap_referral_reward_fee_rate == self.referral_reward_fee_rate {
+            return Err(ErrorCode::FeeRateUnchanged.into());
+        }
         self.referral_reward_fee_rate = swap_referral_reward_fee_rate;
         Ok(())
     }

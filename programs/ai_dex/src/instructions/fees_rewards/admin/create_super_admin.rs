@@ -38,6 +38,11 @@ pub fn create_super_admin_handler(
     ctx: Context<CreateSuperAdmin>,
     super_admin: Pubkey,
 ) -> Result<()> {
+    // Validate the provided super_admin public key is not default/empty.
+    if super_admin == Pubkey::default() {
+        return Err(ErrorCode::EmptyAdminInput.into());
+    }
+
     let super_admin_account = &mut ctx.accounts.super_admin_account;
 
     // Check if the super admin has already been initialized.

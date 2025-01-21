@@ -101,32 +101,22 @@ pub fn collect_fees_handler<'a, 'b, 'c, 'info>(
 
     let ai_dex_pool = ctx.accounts.ai_dex_pool.load()?;
 
-    // Check if token_mint_a matches ai_dex_pool.token_mint_a
+    // Validate token mints against the pool's expected mints.
     if ctx.accounts.token_mint_a.key() != ai_dex_pool.token_mint_a {
         return Err(ErrorCode::InvalidInputTokenMint.into());
     }
-
-    // Check if token_mint_b matches ai_dex_pool.token_mint_b
     if ctx.accounts.token_mint_b.key() != ai_dex_pool.token_mint_b {
         return Err(ErrorCode::InvalidOutputTokenMint.into());
     }
-
-    // Check if token_owner_account_a.mint matches ai_dex_pool.token_mint_a
     if ctx.accounts.token_owner_account_a.mint != ai_dex_pool.token_mint_a {
         return Err(ErrorCode::InvalidTokenOwner.into());
     }
-
-    // Check if token_vault_a matches ai_dex_pool.token_vault_a
     if ctx.accounts.token_vault_a.key() != ai_dex_pool.token_vault_a {
         return Err(ErrorCode::InvalidVault.into());
     }
-
-    // Check if token_owner_account_b.mint matches ai_dex_pool.token_mint_b
     if ctx.accounts.token_owner_account_b.mint != ai_dex_pool.token_mint_b {
         return Err(ErrorCode::InvalidTokenOwner.into());
     }
-
-    // Check if token_vault_b matches ai_dex_pool.token_vault_b
     if ctx.accounts.token_vault_b.key() != ai_dex_pool.token_vault_b {
         return Err(ErrorCode::InvalidVault.into());
     }
@@ -147,31 +137,38 @@ pub fn collect_fees_handler<'a, 'b, 'c, 'info>(
     let fee_owed_a = position.fee_owed_a;
     let fee_owed_b = position.fee_owed_b;
 
+    // Reset fees owed on the position before transferring.
     position.reset_fees_owed();
 
-    transfer_from_vault_to_owner(
-        &ctx.accounts.ai_dex_pool,
-        &ctx.accounts.token_mint_a,
-        &ctx.accounts.token_vault_a,
-        &ctx.accounts.token_owner_account_a,
-        &ctx.accounts.token_program_a,
-        &ctx.accounts.memo_program,
-        &remaining_accounts.transfer_hook_a,
-        fee_owed_a,
-        transfer_memo::TRANSFER_MEMO_COLLECT_FEES.as_bytes(),
-    )?;
+    // Conditionally transfer owed fees for Token A if non-zero.
+    if fee_owed_a > 0 {
+        transfer_from_vault_to_owner(
+            &ctx.accounts.ai_dex_pool,
+            &ctx.accounts.token_mint_a,
+            &ctx.accounts.token_vault_a,
+            &ctx.accounts.token_owner_account_a,
+            &ctx.accounts.token_program_a,
+            &ctx.accounts.memo_program,
+            &remaining_accounts.transfer_hook_a,
+            fee_owed_a,
+            transfer_memo::TRANSFER_MEMO_COLLECT_FEES.as_bytes(),
+        )?;
+    }
 
-    transfer_from_vault_to_owner(
-        &ctx.accounts.ai_dex_pool,
-        &ctx.accounts.token_mint_b,
-        &ctx.accounts.token_vault_b,
-        &ctx.accounts.token_owner_account_b,
-        &ctx.accounts.token_program_b,
-        &ctx.accounts.memo_program,
-        &remaining_accounts.transfer_hook_b,
-        fee_owed_b,
-        transfer_memo::TRANSFER_MEMO_COLLECT_FEES.as_bytes(),
-    )?;
+    // Conditionally transfer owed fees for Token B if non-zero.
+    if fee_owed_b > 0 {
+        transfer_from_vault_to_owner(
+            &ctx.accounts.ai_dex_pool,
+            &ctx.accounts.token_mint_b,
+            &ctx.accounts.token_vault_b,
+            &ctx.accounts.token_owner_account_b,
+            &ctx.accounts.token_program_b,
+            &ctx.accounts.memo_program,
+            &remaining_accounts.transfer_hook_b,
+            fee_owed_b,
+            transfer_memo::TRANSFER_MEMO_COLLECT_FEES.as_bytes(),
+        )?;
+    }
 
     emit!(FeesCollectedEvent {
         ai_dex_pool: ctx.accounts.ai_dex_pool.key(),
@@ -186,7 +183,7 @@ pub fn collect_fees_handler<'a, 'b, 'c, 'info>(
         token_vault_b: ctx.accounts.token_vault_b.key(),
         fee_owed_a,
         fee_owed_b,
-    });    
+    });
 
     Ok(())
 }

@@ -34,8 +34,9 @@ pub fn verify_position_trade_batch_authority<'info>(
 /// Verifies the authority of a position token account.
 ///
 /// This function checks if the provided position token account has the correct authority.
-/// If the position token account has a delegate, it checks if the authority matches the delegate.
-/// Otherwise, it checks if the authority matches the owner.
+/// If the position token account has a delegate and the signer matches the delegate,
+/// it additionally checks that the delegated amount is valid. Otherwise, it verifies
+/// that the signer is the owner of the position token account.
 ///
 /// # Arguments
 ///
@@ -44,7 +45,7 @@ pub fn verify_position_trade_batch_authority<'info>(
 ///
 /// # Errors
 ///
-/// This function returns an error if:
+/// Returns an error if:
 /// * The authority is missing or invalid.
 /// * The position token amount is invalid.
 pub fn verify_position_authority<'info>(
@@ -53,22 +54,19 @@ pub fn verify_position_authority<'info>(
 ) -> Result<()> {
     if let COption::Some(ref delegate) = position_token_account.delegate {
         if position_authority.key == delegate {
+            // If the signer matches the delegate, validate against the delegate and check amount.
             validate_owner(delegate, &position_authority.to_account_info())?;
             if position_token_account.delegated_amount != 1 {
                 return Err(ErrorCode::InvalidPositionTokenAmountError.into());
             }
-        } else {
-            validate_owner(
-                &position_token_account.owner,
-                &position_authority.to_account_info(),
-            )?;
+            return Ok(());
         }
-    } else {
-        validate_owner(
-            &position_token_account.owner,
-            &position_authority.to_account_info(),
-        )?;
     }
+    // For all other cases, validate against the account owner.
+    validate_owner(
+        &position_token_account.owner,
+        &position_authority.to_account_info(),
+    )?;
     Ok(())
 }
 

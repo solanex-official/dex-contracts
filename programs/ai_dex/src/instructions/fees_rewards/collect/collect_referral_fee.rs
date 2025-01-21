@@ -77,6 +77,10 @@ pub fn collect_referral_fees_handler<'a, 'b, 'c, 'info>(
         return Err(ErrorCode::InvalidSwapReferralAta.into());
     }
 
+    if amount == 0 {
+        return Err(ErrorCode::ZeroReferralAmountWithdrawal.into());
+    }
+
     // Process remaining accounts (if any)
     let remaining_accounts = parse_remaining_accounts(
         &ctx.remaining_accounts,
